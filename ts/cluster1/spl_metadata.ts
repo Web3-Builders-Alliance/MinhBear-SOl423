@@ -1,32 +1,57 @@
-import { Commitment, Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js"
 import wallet from "../wba-wallet.json"
-import { createCreateMetadataAccountV2Instruction, createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/mpl-token-metadata";
-
-// We're going to import our keypair from the wallet file
-const keypair = Keypair.fromSecretKey(new Uint8Array(wallet));
-
-//Create a Solana devnet connection
-const commitment: Commitment = "confirmed";
-const connection = new Connection("https://api.devnet.solana.com", commitment);
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults"
+import {
+    createMetadataAccountV3,
+    CreateMetadataAccountV3InstructionAccounts,
+    CreateMetadataAccountV3InstructionArgs,
+    DataV2Args
+} from "@metaplex-foundation/mpl-token-metadata";
+import { createSignerFromKeypair, signerIdentity, publicKey } from "@metaplex-foundation/umi";
 
 // Define our Mint address
-const mint = new PublicKey("<mint address>")
+const mint = publicKey("9xXa31Mnqxsnhd27uz4UTyrztzHA2f15bqb2dJ3puPhD")
 
-// Add the Token Metadata Program
-const token_metadata_program_id = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s')
-
-// Create PDA for token metadata
-const metadata_seeds = [
-    Buffer.from('metadata'),
-    token_metadata_program_id.toBuffer(),
-    mint.toBuffer(),
-];
-const [metadata_pda, _bump] = PublicKey.findProgramAddressSync(metadata_seeds, token_metadata_program_id);
-
+// Create a UMI connection
+const umi = createUmi('https://api.devnet.solana.com');
+const keypair = umi.eddsa.createKeypairFromSecretKey(new Uint8Array(wallet));
+const signer = createSignerFromKeypair(umi, keypair);
+umi.use(signerIdentity(createSignerFromKeypair(umi, keypair)));
 (async () => {
     try {
-        // Start here
-    } catch(e) {
+
+        let accounts: CreateMetadataAccountV3InstructionAccounts = {
+            mint,
+            mintAuthority: signer
+        }
+
+        let data: DataV2Args = {
+            name: "WBA Token",
+            symbol: "WBAT",
+            uri: "",
+            sellerFeeBasisPoints: 0,
+            collection: null,
+            creators: null,
+            uses: null
+        }
+
+        let args: CreateMetadataAccountV3InstructionArgs = {
+            data,
+            isMutable: true,
+            collectionDetails: null,
+        }
+
+        const tx = createMetadataAccountV3(
+            umi,
+            {
+                ...accounts,
+                ...args,
+            }
+        )
+
+        let result = await tx.sendAndConfirm(umi);
+
+        console.log(result.signature);
+    } catch (e) {
         console.error(`Oops, something went wrong: ${e}`)
     }
 })();
