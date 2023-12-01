@@ -14,6 +14,7 @@ import {
 } from '@solana/web3.js';
 import wallet from '../wba-wallet.json';
 import { IDL, WbaVault } from '../programs/wba_vault';
+import { airdrop } from '../utils';
 
 // Import our keypair from the wallet file
 const keypair = Keypair.fromSecretKey(new Uint8Array(wallet));
@@ -23,6 +24,7 @@ const commitment: Commitment = 'confirmed';
 
 // Create a devnet connection
 const connection = new Connection('https://api.devnet.solana.com');
+airdrop(connection, keypair)
 
 // Create our anchor provider
 const provider = new AnchorProvider(connection, new Wallet(keypair), {
@@ -76,7 +78,8 @@ const [vaultKey, _bump2] = PublicKey.findProgramAddressSync(
 		console.log(
 			`Deposit success! Check out your TX here:\n\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`
 		);
-
+		
+		// https://explorer.solana.com/tx/3eqXH9NZPhJ8pE5GqAi8xZ2ZanMEVa2utvYkW4JaEb7a9SgDmxqQ2Peb5AtJey1NPfx2zn4xq94mqnZVmTFHX1YE?cluster=devnet
 	} catch (e) {
 		console.error(`Oops, something went wrong: ${e}`);
 	}

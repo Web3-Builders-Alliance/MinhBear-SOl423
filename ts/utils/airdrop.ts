@@ -5,6 +5,7 @@ export async function airdrop(
   keypair: Keypair,
   forceAirdrop: boolean = false
 ): Promise<number> {
+  console.log(keypair.publicKey)
   let balance = await connection.getBalance(keypair.publicKey);
   console.log(`Current balance: ${balance}`);
 
